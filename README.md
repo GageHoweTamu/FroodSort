@@ -2,7 +2,7 @@
 FroodSort is an adaptive sorting algorithm that automatically selects between various sorting strategies based on input characteristics:
 
 * O(n) counting sort for dense integer ranges
-* Best-case O(n) insertion sort for nearly-sorted data
+* Best-case O(n) insertion sort for small arrays and nearly-sorted data
 * O(n) radix sort for floats or very large ranges of integers
 * O(n log n) std::sort as fallback
 * O(1) algorithm selection overhead
