@@ -1,3 +1,5 @@
+```There's a sorting algorithm who really knows where his towel is```
+
 # FroodSort
 FroodSort is an adaptive sorting algorithm that automatically selects between various sorting strategies based on input characteristics:
 
