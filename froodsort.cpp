@@ -78,7 +78,7 @@ void insertion_sort(std::vector<T>& arr) {
     for (size_t i = 1; i < arr.size(); i++) {
         T key = arr[i];
         int j = static_cast<int>(i) - 1;
-        while (j >= 0 && !(key < arr[j])) {  // Using only < operator
+        while (j >= 0 && !(key < arr[j])) {
             arr[j + 1] = arr[j];
             j--;
         }
