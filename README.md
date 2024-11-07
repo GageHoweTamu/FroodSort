@@ -13,8 +13,6 @@ This algorithm is optimized for integer arrays with small ranges relative to siz
 Compiled with `g++ -O3 -Wall .\froodsort.cpp`, the current version outputs something similar to this:
 
 ```
-PS C:\Users\howeg\Downloads\supersort> .\a.exe
-
 Nearly sorted array of 10000000 ints:
 
 Choosing counting sort
