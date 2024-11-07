@@ -53,6 +53,6 @@ std::sort:    6291.99ms
 First few elements after sorting: 43 106 290 308 324 
 ```
 
-* These benchmarks seem too good to be true, I'm only using integers though. More testing is required.
+* These benchmarks seem too good to be true, more testing is required.
 
-* Large datatypes are extremely slow, need to look into this.
+* Large datatypes are pretty slow and fall back to std::sort, need to look into this.
