@@ -4,22 +4,55 @@
 #include <chrono>
 #include <algorithm>
 #include <iomanip>
+#include <type_traits>  // Add this for type traits
 
-void quicksort(std::vector<int>& arr, int left, int right) {
-    if (left >= right) return;
-    int pivot = arr[(left + right) / 2];
-    int i = left, j = right;
+
+template<typename T>
+void quicksort(std::vector<T>& arr, int left, int right) {
+    // Use insertion sort for small subarrays
+    if (right - left < 16) {
+        for (int i = left + 1; i <= right; i++) {
+            T key = arr[i];
+            int j = i - 1;
+            while (j >= left && !(key < arr[j])) {  // Using only < operator
+                arr[j + 1] = arr[j];
+                j--;
+            }
+            arr[j + 1] = key;
+        }
+        return;
+    }
     
-    while (i <= j) {
-        while (arr[i] < pivot) i++;
-        while (arr[j] > pivot) j--;
-        if (i <= j) {
+    // Median-of-three pivot selection
+    int mid = (left + right) / 2;
+    if (arr[mid] < arr[left])
+        std::swap(arr[left], arr[mid]);
+    if (arr[right] < arr[left])
+        std::swap(arr[left], arr[right]);
+    if (arr[mid] < arr[right])
+        std::swap(arr[mid], arr[right]);
+        
+    T pivot = arr[right];
+    int i = left - 1;
+    
+    // Partition using only < operator
+    for (int j = left; j < right; j++) {
+        if (!(pivot < arr[j])) {
+            i++;
             std::swap(arr[i], arr[j]);
-            i++; j--;
         }
     }
-    if (left < j) quicksort(arr, left, j);
-    if (i < right) quicksort(arr, i, right);
+    std::swap(arr[i + 1], arr[right]);
+    
+    int partition = i + 1;
+    
+    if (partition - left < right - partition) {
+        quicksort(arr, left, partition - 1);
+        quicksort(arr, partition + 1, right);
+    } else {
+        quicksort(arr, partition + 1, right);
+        quicksort(arr, left, partition - 1);
+    }
 }
 
 void counting_sort(std::vector<int>& arr) {
@@ -34,11 +67,12 @@ void counting_sort(std::vector<int>& arr) {
             arr[idx++] = i;
 }
 
-void insertion_sort(std::vector<int>& arr) {
-    for (int i = 1; i < arr.size(); i++) {
-        int key = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j] > key) {
+template<typename T>
+void insertion_sort(std::vector<T>& arr) {
+    for (size_t i = 1; i < arr.size(); i++) {
+        T key = arr[i];
+        int j = static_cast<int>(i) - 1;
+        while (j >= 0 && !(key < arr[j])) {  // Using only < operator
             arr[j + 1] = arr[j];
             j--;
         }
@@ -46,10 +80,12 @@ void insertion_sort(std::vector<int>& arr) {
     }
 }
 
-void adaptive_sort(std::vector<int>& arr) {
+template<typename T>
+void adaptive_sort(std::vector<T>& arr) {
     if (arr.size() <= 1) return;
     
     if (arr.size() < 50) {
+        std::cout << "Choosing insertion sort for small array\n";
         insertion_sort(arr);
         return;
     }
@@ -57,20 +93,36 @@ void adaptive_sort(std::vector<int>& arr) {
     size_t check_size = std::min<size_t>(100, arr.size() - 1);
     int inversions = 0;
     for (size_t i = 0; i < check_size; i++) {
-        if (arr[i] > arr[i + 1]) inversions++;
+        if (arr[i + 1] < arr[i]) inversions++;  // Using only < operator
     }
+    
     if (inversions < 10) {
-        insertion_sort(arr);
+        if (arr.size() < 10000) {
+            insertion_sort(arr);
+        } else {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            for (size_t i = 0; i < arr.size()/100; i++) {
+                size_t idx1 = gen() % arr.size();
+                size_t idx2 = gen() % arr.size();
+                std::swap(arr[idx1], arr[idx2]);
+            }
+            quicksort(arr, 0, static_cast<int>(arr.size()) - 1);
+        }
         return;
     }
     
-    int max_val = *std::max_element(arr.begin(), arr.end());
-    if (max_val < static_cast<int>(arr.size() * 10)) {
-        counting_sort(arr);
-        return;
+    if constexpr (std::is_integral<T>::value) {
+        T max_val = *std::max_element(arr.begin(), arr.end());
+        if (max_val < static_cast<T>(arr.size() * 10)) {
+            std::vector<int> temp(arr.begin(), arr.end());
+            counting_sort(temp);
+            std::copy(temp.begin(), temp.end(), arr.begin());
+            return;
+        }
     }
     
-    quicksort(arr, 0, arr.size() - 1);
+    quicksort(arr, 0, static_cast<int>(arr.size()) - 1);
 }
 
 void verify_sort(const std::vector<int>& arr, const std::string& name) {
@@ -83,7 +135,8 @@ void verify_sort(const std::vector<int>& arr, const std::string& name) {
     std::cout << "\n";
 }
 
-double time_sort(std::vector<int>& arr, bool use_std_sort) {
+template<typename T>
+double time_sort(std::vector<T>& arr, bool use_std_sort) {
     auto start = std::chrono::high_resolution_clock::now();
     
     if (use_std_sort) {
@@ -96,8 +149,24 @@ double time_sort(std::vector<int>& arr, bool use_std_sort) {
     return std::chrono::duration<double, std::milli>(end - start).count();
 }
 
+struct BigType1 {
+
+    std::vector<char> data;
+    int number = 0;
+
+    bool operator<(const BigType1& other) const {
+        return number < other.number;
+    }
+    bool operator>(const BigType1& other) const {
+        return number > other.number;
+    }
+
+    // 1MB * 1024
+    BigType1() : data(1024) {}
+};
+
 int main() {
-    const int SIZE = 100000000;
+    const int SIZE = 10000000;
     std::random_device rd;
     std::mt19937 gen(rd());
     
@@ -157,5 +226,33 @@ int main() {
         verify_sort(std_arr3, "std::sort");
     }
     
+    // Test 4: BigType1 array
+    {
+        const int BIG_SIZE = 100000; // Smaller size due to memory constraints
+        std::vector<BigType1> arr4(BIG_SIZE), std_arr4(BIG_SIZE);
+        std::uniform_int_distribution<> dis4(1, 100);
+        
+        // Initialize with random numbers
+        for (int i = 0; i < BIG_SIZE; i++) {
+            arr4[i].number = std_arr4[i].number = dis4(gen);
+        }
+        
+        double adaptive_time = time_sort(arr4, false);
+        double std_time = time_sort(std_arr4, true);
+        std::cout << "\nBigType1 array (" << BIG_SIZE << " elements):\n";
+        std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
+        std::cout << "std::sort:    " << std_time << "ms\n";
+        
+        // Verify first few elements
+        std::cout << "First few numbers from adaptive sort: ";
+        for (int i = 0; i < std::min(5, BIG_SIZE); i++) {
+            std::cout << arr4[i].number << " ";
+        }
+        std::cout << "\n";
+        
+        bool is_sorted = std::is_sorted(arr4.begin(), arr4.end());
+        std::cout << "Correctly sorted: " << (is_sorted ? "Yes" : "No") << "\n";
+    }
+
     return 0;
 }
