@@ -10,7 +10,7 @@ This algorithm is optimized for integer arrays with small ranges relative to siz
 
 ## Benchmarks
 
-Compiled with `g++ -O3 -Wall .\supersort.cpp`, the current version outputs something similar to this:
+Compiled with `g++ -O3 -Wall .\froodsort.cpp`, the current version outputs something similar to this:
 
 ```
 Nearly sorted array (100000000 elements):
