@@ -13,36 +13,38 @@ This algorithm is optimized for integer arrays with small ranges relative to siz
 Compiled with `g++ -O3 -Wall .\froodsort.cpp`, the current version outputs something similar to this:
 
 ```
+PS C:\Users\howeg\Downloads\supersort> .\a.exe
 
-Nearly sorted array (10000000 elements):
-Adaptive sort: 296.44ms
-std::sort:    1462.34ms
-Adaptive sort - correctly sorted: Yes
-First few elements: 0 1 2 3 4
-std::sort - correctly sorted: Yes
-First few elements: 0 1 2 3 4
+Nearly sorted array of 10000000 ints:
 
-Small range array (10000000 elements, range 1-100):
-Adaptive sort: 208.85ms
-std::sort:    746.46ms
-Adaptive sort - correctly sorted: Yes
-First few elements: 1 1 1 1 1
-std::sort - correctly sorted: Yes
-First few elements: 1 1 1 1 1
+Choosing counting sort
+Adaptive sort: 314.20ms
+std::sort:    1373.37ms
 
-Random array (10000000 elements, range 1-1M):
-Adaptive sort: 249.93ms
-std::sort:    2493.08ms
-Adaptive sort - correctly sorted: Yes
-First few elements: 1 1 1 1 1
-std::sort - correctly sorted: Yes
-First few elements: 1 1 1 1 1
+Small range array of 10000000 ints, range 1-100):
 
-BigType1 array (100000 elements):
-Adaptive sort: 3718.43ms
-std::sort:    28.65ms
-First few numbers from adaptive sort: 1 1 1 1 1
-Correctly sorted: Yes
+Choosing counting sort
+Adaptive sort: 229.69ms
+std::sort:    797.58ms
+
+Random array of 10000000 ints, range 1-1M):
+
+Choosing counting sort
+Adaptive sort: 278.06ms
+std::sort:    2654.74ms
+
+BigType1 array of100000 elements
+
+Falling back to std::sort
+Adaptive sort: 31.42ms
+std::sort:    31.17ms
+1 1 1 1 1
+
+Nearly sorted array of 10000000 floats
+
+Falling back to std::sort
+Adaptive sort: 1293.19ms
+std::sort:    1282.04ms
 ```
 
 * These benchmarks seem too good to be true, I'm only using integers though. More testing is required.
