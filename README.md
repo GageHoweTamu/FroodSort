@@ -17,33 +17,40 @@ Compiled with `g++ -O3 -Wall .\froodsort.cpp`, the current version outputs somet
 Nearly sorted array of 10000000 ints:
 
 Choosing counting sort
-Adaptive sort: 314.20ms
-std::sort:    1373.37ms
+Adaptive sort: 300.75ms
+std::sort:    1498.94ms
 
 Small range array of 10000000 ints, range 1-100):
 
 Choosing counting sort
-Adaptive sort: 229.69ms
-std::sort:    797.58ms
+Adaptive sort: 209.65ms
+std::sort:    778.12ms
 
 Random array of 10000000 ints, range 1-1M):
 
 Choosing counting sort
-Adaptive sort: 278.06ms
-std::sort:    2654.74ms
+Adaptive sort: 264.94ms
+std::sort:    2601.44ms
 
-BigType1 array of100000 elements
+BigType1 array of 100000 elements
 
 Falling back to std::sort
-Adaptive sort: 31.42ms
-std::sort:    31.17ms
+Adaptive sort: 42.22ms
+std::sort:    36.35ms
 1 1 1 1 1
 
 Nearly sorted array of 10000000 floats
 
 Falling back to std::sort
-Adaptive sort: 1293.19ms
-std::sort:    1282.04ms
+Adaptive sort: 1411.46ms
+std::sort:    1336.72ms
+
+Large array with wide range (20000000 elements, range 0 to 1073741823):
+
+Choosing radix sort
+Adaptive sort: 2788.92ms
+std::sort:    6291.99ms
+First few elements after sorting: 43 106 290 308 324 
 ```
 
 * These benchmarks seem too good to be true, I'm only using integers though. More testing is required.
