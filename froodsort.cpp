@@ -4,7 +4,7 @@
 #include <chrono>
 #include <algorithm>
 #include <iomanip>
-#include <type_traits>  // Add this for type traits
+#include <type_traits>
 
 
 template<typename T>
@@ -14,7 +14,7 @@ void quicksort(std::vector<T>& arr, int left, int right) {
         for (int i = left + 1; i <= right; i++) {
             T key = arr[i];
             int j = i - 1;
-            while (j >= left && !(key < arr[j])) {  // Using only < operator
+            while (j >= left && !(key < arr[j])) {
                 arr[j + 1] = arr[j];
                 j--;
             }
@@ -23,7 +23,6 @@ void quicksort(std::vector<T>& arr, int left, int right) {
         return;
     }
     
-    // Median-of-three pivot selection
     int mid = (left + right) / 2;
     if (arr[mid] < arr[left])
         std::swap(arr[left], arr[mid]);
@@ -35,7 +34,6 @@ void quicksort(std::vector<T>& arr, int left, int right) {
     T pivot = arr[right];
     int i = left - 1;
     
-    // Partition using only < operator
     for (int j = left; j < right; j++) {
         if (!(pivot < arr[j])) {
             i++;
