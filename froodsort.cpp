@@ -129,7 +129,13 @@ void adaptive_sort(std::vector<T>& arr) {
 template<typename T>
 void verify_sort(const std::vector<T>& arr, const std::string& name) {
     bool is_sorted = std::is_sorted(arr.begin(), arr.end());
-    std::cout << name << " - correctly sorted: " << (is_sorted ? "Yes" : "No") << "\n";
+    if (!is_sorted) {
+        std::cout << "NOT CORRECTLY SORTED: First 5 elements of " << name << ":\n";
+        for (int i = 0; i < std::min(5, static_cast<int>(arr.size())); i++) {
+            std::cout << arr[i] << " ";
+        }
+        std::cout << "\n";
+    }
 }
 
 
@@ -192,6 +198,7 @@ int main() {
     
     // Test 1: Nearly sorted array of ints
     {
+        std::cout << "\nNearly sorted array of " << SIZE << " ints:\n";
         std::vector<int> arr1(SIZE), std_arr1(SIZE);
         for (int i = 0; i < SIZE; i++) arr1[i] = std_arr1[i] = i;
         for (int i = 0; i < SIZE/20; i++) {
@@ -204,7 +211,6 @@ int main() {
         double adaptive_time = time_sort(arr1, false);
         double std_time = time_sort(std_arr1, true);
         
-        std::cout << "\nNearly sorted array (" << SIZE << " elements):\n";
         std::cout << std::fixed << std::setprecision(2);
         std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
         std::cout << "std::sort:    " << std_time << "ms\n";
@@ -214,6 +220,7 @@ int main() {
     
     // Test 2: Small range array of ints
     {
+        std::cout << "\nSmall range array of " << SIZE << " ints, range 1-100):\n";
         std::vector<int> arr2(SIZE), std_arr2(SIZE);
         std::uniform_int_distribution<> dis2(1, 100);
         for (int i = 0; i < SIZE; i++) 
@@ -222,7 +229,6 @@ int main() {
         double adaptive_time = time_sort(arr2, false);
         double std_time = time_sort(std_arr2, true);
         
-        std::cout << "\nSmall range array (" << SIZE << " elements, range 1-100):\n";
         std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
         std::cout << "std::sort:    " << std_time << "ms\n";
         verify_sort(arr2, "Adaptive sort");
@@ -231,6 +237,7 @@ int main() {
     
     // Test 3: Random array of ints
     {
+        std::cout << "\nRandom array of " << SIZE << " ints, range 1-1M):\n";
         std::vector<int> arr3(SIZE), std_arr3(SIZE);
         std::uniform_int_distribution<> dis3(1, 1000000);
         for (int i = 0; i < SIZE; i++) 
@@ -239,7 +246,6 @@ int main() {
         double adaptive_time = time_sort(arr3, false);
         double std_time = time_sort(std_arr3, true);
         
-        std::cout << "\nRandom array (" << SIZE << " elements, range 1-1M):\n";
         std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
         std::cout << "std::sort:    " << std_time << "ms\n";
         verify_sort(arr3, "Adaptive sort");
@@ -249,31 +255,38 @@ int main() {
     // Test 4: BigType1 array with int member
     {
         const int BIG_SIZE = 100000; 
+        std::cout << "\nBigType1 array of" << BIG_SIZE << " elements\n";
         std::vector<BigType1> arr4(BIG_SIZE), std_arr4(BIG_SIZE);
         std::uniform_int_distribution<> dis4(1, 100);
         
-        // Initialize with random numbers
         for (int i = 0; i < BIG_SIZE; i++) {
             arr4[i].number = std_arr4[i].number = dis4(gen);
         }
         
         double adaptive_time = time_sort(arr4, false);
         double std_time = time_sort(std_arr4, true);
-        std::cout << "\nBigType1 array (" << BIG_SIZE << " elements):\n";
         std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
         std::cout << "std::sort:    " << std_time << "ms\n";
         
-        // Verify first few elements
         for (int i = 0; i < std::min(5, BIG_SIZE); i++) {
             std::cout << arr4[i].number << " ";
         }
         std::cout << "\n";
         
         bool is_sorted = std::is_sorted(arr4.begin(), arr4.end());
-        std::cout << "Correctly sorted: " << (is_sorted ? "Yes" : "No") << "\n";
+        if (!is_sorted) {
+            std::cout << "NOT CORRECTLY SORTED: First 5 elements of BigType1 array after sorting:\n";
+            for (int i = 0; i < std::min(5, BIG_SIZE); i++) {
+                std::cout << arr4[i].number << " ";
+            }
+            std::cout << "\n";
+        }
     }
+
     // Test 5: Nearly sorted array of floats
     {
+        
+        std::cout << "\nNearly sorted array of " << SIZE << " floats\n";
         std::vector<float> arr1(SIZE), std_arr1(SIZE);
         for (int i = 0; i < SIZE; i++) arr1[i] = std_arr1[i] = static_cast<float>(i);
         for (int i = 0; i < SIZE/20; i++) {
@@ -286,7 +299,6 @@ int main() {
         double adaptive_time = time_sort(arr1, false);
         double std_time = time_sort(std_arr1, true);
         
-        std::cout << "\nNearly sorted array (" << SIZE << " elements):\n";
         std::cout << std::fixed << std::setprecision(2);
         std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
         std::cout << "std::sort:    " << std_time << "ms\n";
