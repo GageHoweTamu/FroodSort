@@ -7,22 +7,24 @@
 #include <type_traits>
 
 
+// quicksort with move semantics and adaptive sorting
 template<typename T>
 void quicksort(std::vector<T>& arr, int left, int right) {
-    // Use insertion sort for small subarrays
+    // insertion sort for small subarrays
     if (right - left < 16) {
         for (int i = left + 1; i <= right; i++) {
-            T key = arr[i];
+            T temp = std::move(arr[i]);
             int j = i - 1;
-            while (j >= left && !(key < arr[j])) {
-                arr[j + 1] = arr[j];
+            while (j >= left && temp < arr[j]) {
+                arr[j + 1] = std::move(arr[j]);
                 j--;
             }
-            arr[j + 1] = key;
+            arr[j + 1] = std::move(temp);
         }
         return;
     }
     
+    // Median-of-three pivot selection
     int mid = (left + right) / 2;
     if (arr[mid] < arr[left])
         std::swap(arr[left], arr[mid]);
@@ -32,25 +34,30 @@ void quicksort(std::vector<T>& arr, int left, int right) {
         std::swap(arr[mid], arr[right]);
         
     T pivot = arr[right];
-    int i = left - 1;
     
-    for (int j = left; j < right; j++) {
-        if (!(pivot < arr[j])) {
-            i++;
-            std::swap(arr[i], arr[j]);
+    // Three-way partitioning for better handling of duplicates
+    int p = left - 1;
+    int q = right;
+    int k = left;
+    
+    while (k < q) {
+        if (arr[k] < pivot) {
+            p++;
+            std::swap(arr[p], arr[k]);
+            k++;
+        } else if (pivot < arr[k]) {
+            q--;
+            std::swap(arr[k], arr[q]);
+        } else {
+            k++;
         }
     }
-    std::swap(arr[i + 1], arr[right]);
     
-    int partition = i + 1;
+    int pivot_start = p + 1;
+    int pivot_end = q;
     
-    if (partition - left < right - partition) {
-        quicksort(arr, left, partition - 1);
-        quicksort(arr, partition + 1, right);
-    } else {
-        quicksort(arr, partition + 1, right);
-        quicksort(arr, left, partition - 1);
-    }
+    quicksort(arr, left, p);
+    quicksort(arr, q, right);
 }
 
 void counting_sort(std::vector<int>& arr) {
@@ -83,7 +90,7 @@ void adaptive_sort(std::vector<T>& arr) {
     if (arr.size() <= 1) return;
     
     if (arr.size() < 50) {
-        std::cout << "Choosing insertion sort for small array\n";
+        std::cout << "\nChoosing insertion sort for small array\n";
         insertion_sort(arr);
         return;
     }
@@ -96,42 +103,36 @@ void adaptive_sort(std::vector<T>& arr) {
     
     if (inversions < 10) {
         if (arr.size() < 10000) {
+            std::cout << "\nChoosing insertion sort for nearly sorted array\n";
             insertion_sort(arr);
-        } else {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            for (size_t i = 0; i < arr.size()/100; i++) {
-                size_t idx1 = gen() % arr.size();
-                size_t idx2 = gen() % arr.size();
-                std::swap(arr[idx1], arr[idx2]);
-            }
-            quicksort(arr, 0, static_cast<int>(arr.size()) - 1);
+            return;
         }
-        return;
     }
     
+    // if array has small range, use counting sort
     if constexpr (std::is_integral<T>::value) {
         T max_val = *std::max_element(arr.begin(), arr.end());
         if (max_val < static_cast<T>(arr.size() * 10)) {
             std::vector<int> temp(arr.begin(), arr.end());
+            std::cout << "\nChoosing counting sort\n";
             counting_sort(temp);
             std::copy(temp.begin(), temp.end(), arr.begin());
             return;
         }
     }
     
-    quicksort(arr, 0, static_cast<int>(arr.size()) - 1);
+    std::cout << "\nFalling back to std::sort\n";
+    std::sort(arr.begin(), arr.end());
 }
 
-void verify_sort(const std::vector<int>& arr, const std::string& name) {
+// Made verify_sort generic
+template<typename T>
+void verify_sort(const std::vector<T>& arr, const std::string& name) {
     bool is_sorted = std::is_sorted(arr.begin(), arr.end());
     std::cout << name << " - correctly sorted: " << (is_sorted ? "Yes" : "No") << "\n";
-    std::cout << "First few elements: ";
-    for(int i = 0; i < std::min(5, static_cast<int>(arr.size())); i++) {
-        std::cout << arr[i] << " ";
-    }
-    std::cout << "\n";
 }
+
+
 
 template<typename T>
 double time_sort(std::vector<T>& arr, bool use_std_sort) {
@@ -148,19 +149,40 @@ double time_sort(std::vector<T>& arr, bool use_std_sort) {
 }
 
 struct BigType1 {
-
     std::vector<char> data;
     int number = 0;
+
+    BigType1() : data(1024) {}
+    
+    // Add move constructor
+    BigType1(BigType1&& other) noexcept 
+        : data(std::move(other.data)), number(other.number) {}
+    
+    // Add move assignment operator
+    BigType1& operator=(BigType1&& other) noexcept {
+        if (this != &other) {
+            data = std::move(other.data);
+            number = other.number;
+        }
+        return *this;
+    }
+    
+    // Add copy constructor
+    BigType1(const BigType1& other)
+        : data(other.data), number(other.number) {}
+    
+    // Add copy assignment operator
+    BigType1& operator=(const BigType1& other) {
+        if (this != &other) {
+            data = other.data;
+            number = other.number;
+        }
+        return *this;
+    }
 
     bool operator<(const BigType1& other) const {
         return number < other.number;
     }
-    bool operator>(const BigType1& other) const {
-        return number > other.number;
-    }
-
-    // 1MB * 1024
-    BigType1() : data(1024) {}
 };
 
 int main() {
@@ -168,7 +190,7 @@ int main() {
     std::random_device rd;
     std::mt19937 gen(rd());
     
-    // Test 1: Nearly sorted array
+    // Test 1: Nearly sorted array of ints
     {
         std::vector<int> arr1(SIZE), std_arr1(SIZE);
         for (int i = 0; i < SIZE; i++) arr1[i] = std_arr1[i] = i;
@@ -190,7 +212,7 @@ int main() {
         verify_sort(std_arr1, "std::sort");
     }
     
-    // Test 2: Small range array
+    // Test 2: Small range array of ints
     {
         std::vector<int> arr2(SIZE), std_arr2(SIZE);
         std::uniform_int_distribution<> dis2(1, 100);
@@ -207,7 +229,7 @@ int main() {
         verify_sort(std_arr2, "std::sort");
     }
     
-    // Test 3: Random array
+    // Test 3: Random array of ints
     {
         std::vector<int> arr3(SIZE), std_arr3(SIZE);
         std::uniform_int_distribution<> dis3(1, 1000000);
@@ -224,9 +246,9 @@ int main() {
         verify_sort(std_arr3, "std::sort");
     }
     
-    // Test 4: BigType1 array
+    // Test 4: BigType1 array with int member
     {
-        const int BIG_SIZE = 100000; // Smaller size due to memory constraints
+        const int BIG_SIZE = 100000; 
         std::vector<BigType1> arr4(BIG_SIZE), std_arr4(BIG_SIZE);
         std::uniform_int_distribution<> dis4(1, 100);
         
@@ -242,7 +264,6 @@ int main() {
         std::cout << "std::sort:    " << std_time << "ms\n";
         
         // Verify first few elements
-        std::cout << "First few numbers from adaptive sort: ";
         for (int i = 0; i < std::min(5, BIG_SIZE); i++) {
             std::cout << arr4[i].number << " ";
         }
@@ -251,6 +272,26 @@ int main() {
         bool is_sorted = std::is_sorted(arr4.begin(), arr4.end());
         std::cout << "Correctly sorted: " << (is_sorted ? "Yes" : "No") << "\n";
     }
-
+    // Test 5: Nearly sorted array of floats
+    {
+        std::vector<float> arr1(SIZE), std_arr1(SIZE);
+        for (int i = 0; i < SIZE; i++) arr1[i] = std_arr1[i] = static_cast<float>(i);
+        for (int i = 0; i < SIZE/20; i++) {
+            int idx1 = gen() % SIZE;
+            int idx2 = gen() % SIZE;
+            std::swap(arr1[idx1], arr1[idx2]);
+            std::swap(std_arr1[idx1], std_arr1[idx2]);
+        }
+        
+        double adaptive_time = time_sort(arr1, false);
+        double std_time = time_sort(std_arr1, true);
+        
+        std::cout << "\nNearly sorted array (" << SIZE << " elements):\n";
+        std::cout << std::fixed << std::setprecision(2);
+        std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
+        std::cout << "std::sort:    " << std_time << "ms\n";
+        verify_sort(arr1, "Adaptive sort");
+        verify_sort(std_arr1, "std::sort");
+    }
     return 0;
 }
