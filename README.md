@@ -38,4 +38,4 @@ std::sort - correctly sorted: Yes
 First few elements: 1 1 1 1 1
 ```
 
-These benchmarks seem too good to be true. More testing is required.
+These benchmarks seem too good to be true, I'm only using integers though. More testing is required.
