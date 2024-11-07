@@ -1,13 +1,12 @@
 ```There's a sorting algorithm who really knows where his towel is```
 
 # FroodSort
-FroodSort is an adaptive sorting algorithm that automatically selects between various sorting strategies based on input characteristics:
+FroodSort is an adaptive sorting algorithm that automatically selects between various sorting strategies based on input characteristics, with a O(1) algorithm selection overhead:
 
 * O(n) counting sort as a sane default and for dense integer ranges
 * Best-case O(n) insertion sort for small arrays and nearly-sorted data
 * O(n) radix sort for very large ranges of integers
 * O(n log n) std::sort as fallback
-* O(1) algorithm selection overhead
 
 This algorithm is optimized for integer arrays with small ranges relative to size, nearly-sorted sequences, quirks of various datatypes, and modern CPU architectures. It's still a work in progress as I'm not familiar with library development and type gymnastics in c++. Also, there's probably a better implementation out there I haven't seen; this is mostly for my learning purposes anyway.
 
