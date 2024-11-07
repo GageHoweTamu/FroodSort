@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <type_traits>
+#include <array>
 
 
 // quicksort with move semantics and adaptive sorting
@@ -14,7 +15,7 @@ void quicksort(std::vector<T>& arr, int left, int right) {
     if (right - left < 16) {
         for (int i = left + 1; i <= right; i++) {
             T temp = std::move(arr[i]);
-            int j = i - 1;
+            int j = i - 1;uu
             while (j >= left && temp < arr[j]) {
                 arr[j + 1] = std::move(arr[j]);
                 j--;
@@ -86,19 +87,68 @@ void insertion_sort(std::vector<T>& arr) {
 }
 
 template<typename T>
+void lsd_radix_sort(std::vector<T>& arr) {
+    if (arr.empty()) return;
+    
+    const size_t n = arr.size();
+    std::vector<T> temp(n);
+    
+    // Find maximum element to determine number of digits
+    T max_val = *std::max_element(arr.begin(), arr.end());
+    
+    // Process each byte
+    for (size_t byte = 0; byte < sizeof(T); ++byte) {
+        std::array<size_t, 256> count = {0};
+        
+        // Count frequencies
+        for (const T& val : arr) {
+            unsigned char digit = (val >> (byte * 8)) & 0xFF;
+            ++count[digit];
+        }
+        
+        // Calculate positions
+        size_t total = 0;
+        for (size_t i = 0; i < 256; ++i) {
+            size_t old_count = count[i];
+            count[i] = total;
+            total += old_count;
+        }
+        
+        // Move elements
+        for (const T& val : arr) {
+            unsigned char digit = (val >> (byte * 8)) & 0xFF;
+            temp[count[digit]++] = val;
+        }
+        
+        arr = temp;
+        
+        // Early exit if no more significant bytes
+        bool all_zero = true;
+        for (size_t i = byte + 1; i < sizeof(T); ++i) {
+            if ((max_val >> (i * 8)) != 0) {
+                all_zero = false;
+                break;
+            }
+        }
+        if (all_zero) break;
+    }
+}
+template<typename T>
 void adaptive_sort(std::vector<T>& arr) {
     if (arr.size() <= 1) return;
     
-    if (arr.size() < 50) {
-        std::cout << "\nChoosing insertion sort for small array\n";
+    // For very small arrays, use insertion sort
+    if (arr.size() < 32) {
+        std::cout << "\nChoosing insertion sort for tiny array\n";
         insertion_sort(arr);
         return;
     }
     
+    // Check if nearly sorted
     size_t check_size = std::min<size_t>(100, arr.size() - 1);
     int inversions = 0;
     for (size_t i = 0; i < check_size; i++) {
-        if (arr[i + 1] < arr[i]) inversions++;  // Using only < operator
+        if (arr[i + 1] < arr[i]) inversions++;
     }
     
     if (inversions < 10) {
@@ -109,14 +159,33 @@ void adaptive_sort(std::vector<T>& arr) {
         }
     }
     
-    // if array has small range, use counting sort
+    // For integer types, optimize based on range
     if constexpr (std::is_integral<T>::value) {
         T max_val = *std::max_element(arr.begin(), arr.end());
-        if (max_val < static_cast<T>(arr.size() * 10)) {
-            std::vector<int> temp(arr.begin(), arr.end());
-            std::cout << "\nChoosing counting sort\n";
-            counting_sort(temp);
-            std::copy(temp.begin(), temp.end(), arr.begin());
+        T min_val = *std::min_element(arr.begin(), arr.end());
+        
+        if ((max_val - min_val) < static_cast<T>(arr.size() * 10)) {
+            if (min_val < 0) {
+                T offset = -min_val;
+                std::vector<T> temp = arr;
+                for (T& val : temp) val += offset;
+                std::cout << "\nChoosing counting sort (with offset)\n";
+                counting_sort(temp);
+                for (size_t i = 0; i < arr.size(); i++) {
+                    arr[i] = temp[i] - offset;
+                }
+            } else {
+                std::cout << "\nChoosing counting sort\n";
+                counting_sort(arr);
+            }
+            return;
+        }
+        
+        // For very large arrays with large range, where counting sort would use too much memory,
+        // only then consider radix sort
+        if (arr.size() > 1000000 && (max_val - min_val) > static_cast<T>(arr.size() * 10)) {
+            std::cout << "\nChoosing radix sort\n";
+            lsd_radix_sort(arr);
             return;
         }
     }
@@ -125,7 +194,6 @@ void adaptive_sort(std::vector<T>& arr) {
     std::sort(arr.begin(), arr.end());
 }
 
-// Made verify_sort generic
 template<typename T>
 void verify_sort(const std::vector<T>& arr, const std::string& name) {
     bool is_sorted = std::is_sorted(arr.begin(), arr.end());
@@ -137,8 +205,6 @@ void verify_sort(const std::vector<T>& arr, const std::string& name) {
         std::cout << "\n";
     }
 }
-
-
 
 template<typename T>
 double time_sort(std::vector<T>& arr, bool use_std_sort) {
@@ -160,11 +226,9 @@ struct BigType1 {
 
     BigType1() : data(1024) {}
     
-    // Add move constructor
     BigType1(BigType1&& other) noexcept 
         : data(std::move(other.data)), number(other.number) {}
     
-    // Add move assignment operator
     BigType1& operator=(BigType1&& other) noexcept {
         if (this != &other) {
             data = std::move(other.data);
@@ -173,11 +237,9 @@ struct BigType1 {
         return *this;
     }
     
-    // Add copy constructor
     BigType1(const BigType1& other)
         : data(other.data), number(other.number) {}
     
-    // Add copy assignment operator
     BigType1& operator=(const BigType1& other) {
         if (this != &other) {
             data = other.data;
@@ -305,5 +367,39 @@ int main() {
         verify_sort(arr1, "Adaptive sort");
         verify_sort(std_arr1, "std::sort");
     }
+
+// Test 6: Large array with wide range (makes counting sort impractical)
+    {
+        const int LARGE_SIZE = 20000000;  // 20M elements
+        std::vector<int> arr1(LARGE_SIZE), std_arr1(LARGE_SIZE);
+        
+        // Generate numbers between 0 and INT_MAX/2
+        // This range is too large for counting sort (would need ~2GB memory)
+        // but still benefits from radix sort's linear complexity
+        std::uniform_int_distribution<> dis(0, INT_MAX/2);
+        for (int i = 0; i < LARGE_SIZE; i++) {
+            arr1[i] = std_arr1[i] = dis(gen);
+        }
+        
+        std::cout << "\nLarge array with wide range (" << LARGE_SIZE 
+                  << " elements, range 0 to " << INT_MAX/2 << "):\n";
+        
+        double adaptive_time = time_sort(arr1, false);
+        double std_time = time_sort(std_arr1, true);
+        
+        std::cout << std::fixed << std::setprecision(2);
+        std::cout << "Adaptive sort: " << adaptive_time << "ms\n";
+        std::cout << "std::sort:    " << std_time << "ms\n";
+        verify_sort(arr1, "Adaptive sort");
+        verify_sort(std_arr1, "std::sort");
+        
+        // Print first few elements to verify results
+        std::cout << "First few elements after sorting: ";
+        for (int i = 0; i < 5; i++) {
+            std::cout << arr1[i] << " ";
+        }
+        std::cout << "\n";
+    }
+
     return 0;
 }
