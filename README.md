@@ -21,12 +21,6 @@ Choosing counting sort
 Adaptive sort: 300.75ms
 std::sort:    1498.94ms
 
-Small range array of 10000000 ints, range 1-100):
-
-Choosing counting sort
-Adaptive sort: 209.65ms
-std::sort:    778.12ms
-
 Random array of 10000000 ints, range 1-1M):
 
 Choosing counting sort
@@ -45,6 +39,12 @@ Nearly sorted array of 10000000 floats
 Falling back to std::sort
 Adaptive sort: 1411.46ms
 std::sort:    1336.72ms
+
+Small range array of 10000000 ints, range 1-100):
+
+Choosing counting sort
+Adaptive sort: 209.65ms
+std::sort:    778.12ms
 
 Large array with wide range (20000000 elements, range 0 to 1073741823):
 
